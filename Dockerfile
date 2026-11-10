@@ -35,10 +35,7 @@ RUN set -eux; \
     qml6-module-qtqml qml6-module-qtquick qml6-module-qtquick-controls \
     qml6-module-qtquick-layouts qml6-module-qtquick-dialogs qml6-module-qttexttospeech \
     qml6-module-qtquick-effects qml6-module-qtquick-shapes \
-    && fc-cache -f -v
-
-RUN --mount=type=bind,source=icon.png,target=/icon.png \
-    install_app_icon.sh /icon.png \
+    && fc-cache -f -v \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
