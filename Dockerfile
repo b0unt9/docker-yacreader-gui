@@ -1,6 +1,7 @@
 FROM jlesage/baseimage-gui:ubuntu-26.04-v4 AS runtime
 
 ARG YACREADER_VERSION
+ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -26,7 +27,7 @@ RUN set -eux; \
     mkdir -p /config/log && apt-get update -qq \
     && apt-get install -y -qq \
     fontconfig fonts-noto fonts-noto-cjk \
-    7zip libarchive13t64 \
+    7zip 7zip-rar libarchive13t64 \
     libqt6core6 libqt6gui6 libqt6network6 libqt6widgets6 libqt6sql6-sqlite libpoppler-qt6-3t64 \
     libqt6multimedia6 libqt6svg6 libqt6svgwidgets6 libqt6opengl6 libqt6openglwidgets6 libqt6core5compat6 libqt6shadertools6 libqt6texttospeech6 \
     qt6-gtk-platformtheme qt6-image-formats-plugins qt6-qpa-plugins \
@@ -45,7 +46,7 @@ COPY output/${TARGETARCH}/ /
 
 RUN if [ -d /usr/lib/7zip ]; then \
         ln -sf /usr/lib/7zip/7z.so /usr/lib/7zip/lib7z.so && \
-        ln -sfn /usr/lib/7zip /usr/lib/x86_64-linux-gnu/7zip; \
+        ln -sfn /usr/lib/7zip /usr/lib/$(uname -m)-linux-gnu/7zip; \
     fi
 
 COPY --chmod=755 rootfs/ /
