@@ -1,0 +1,67 @@
+name: Build & Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image version"
+        required: true
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-yacreader:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Compile YACReader in isolated Ubuntu container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace ubuntu:26.04 bash -c "
+            export DEBIAN_FRONTEND=noninteractive
+            sed -i 's@archive.ubuntu.com@azure.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+            sed -i 's@security.ubuntu.com@azure.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+            echo 'Acquire::Retries \"3\";' > /etc/apt/apt.conf.d/80-retries
+            apt-get update -qq
+            apt-get install -y -qq --no-install-recommends \
+              build-essential cmake git pkg-config qt6-base-dev qt6-base-private-dev \
+              qt6-declarative-dev qt6-multimedia-dev qt6-svg-dev qt6-tools-dev qt6-l10n-tools \
+              qt6-shadertools-dev libqt6opengl6-dev libqt6core5compat6-dev libqt6sql6-sqlite \
+              qt6-speech-dev libpoppler-qt6-dev libarchive-dev curl ca-certificates xz-utils \
+              qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtquick \
+              qml6-module-qtquick-controls qml6-module-qtquick-layouts \
+              qml6-module-qtquick-dialogs qml6-module-qttexttospeech \
+              qml6-module-qtquick-effects qml6-module-qtquick-shapes
+            
+            curl -L 'https://github.com/YACReader/yacreader/archive/refs/tags/${{ inputs.version }}.tar.gz' -o source.tar.gz
+            tar -xzf source.tar.gz
+            cd yacreader-*
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DDECOMPRESSION_BACKEND=7zip
+            cmake --build build --parallel \$(nproc)
+            DESTDIR=/workspace/build_out cmake --install build
+          "
+
+      - name: Create tarball
+        run: |
+          cd build_out
+          tar -cvf ../${{ matrix.arch }}.tar .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ matrix.arch }}
+          path: ${{ matrix.arch }}.tar
+          retention-days: 1
