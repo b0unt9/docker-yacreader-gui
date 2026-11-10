@@ -1,4 +1,4 @@
-name: Build & Publish
+name: YACReader Build
 
 on:
   workflow_dispatch:
