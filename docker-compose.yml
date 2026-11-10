@@ -1,0 +1,15 @@
+services:
+  yacreader:
+    image: yacreader
+    ports:
+      - "5800:5800"
+      - "5700:8000"
+    volumes:
+      - ./config:/config
+    environment:
+      - USER_ID=0
+      - GROUP_ID=0
+      - LANG=ko_KR.UTF-8
+      - SECURE_CONNECTION=1
+      - KEEP_APP_RUNNING=1
+      - DARK_MODE=1
