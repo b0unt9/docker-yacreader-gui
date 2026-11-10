@@ -1,40 +1,3 @@
-FROM ubuntu:26.04 AS builder
-
-ARG YACREADER_VERSION
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN set -eux; \
-    sed -i 's@archive.ubuntu.com@azure.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null \
-      || sed -i 's@archive.ubuntu.com@azure.archive.ubuntu.com@g' /etc/apt/sources.list 2>/dev/null || true; \
-    sed -i 's@security.ubuntu.com@azure.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null \
-      || sed -i 's@security.ubuntu.com@azure.archive.ubuntu.com@g' /etc/apt/sources.list 2>/dev/null || true; \
-    \
-    echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries; \
-    \
-    apt-get update -qq \
-    && apt-get install -y -qq --no-install-recommends \
-    build-essential cmake git pkg-config qt6-base-dev qt6-base-private-dev \
-    qt6-declarative-dev qt6-multimedia-dev qt6-svg-dev qt6-tools-dev qt6-l10n-tools \
-    qt6-shadertools-dev libqt6opengl6-dev libqt6core5compat6-dev libqt6sql6-sqlite \
-    qt6-speech-dev libpoppler-qt6-dev libarchive-dev curl ca-certificates xz-utils \
-    qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtquick \
-    qml6-module-qtquick-controls qml6-module-qtquick-layouts \
-    qml6-module-qtquick-dialogs qml6-module-qttexttospeech \
-    qml6-module-qtquick-effects qml6-module-qtquick-shapes \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /src
-
-RUN echo "Starting build for YACReader version: ${YACREADER_VERSION}" && \
-    curl -L "https://github.com/YACReader/yacreader/archive/refs/tags/${YACREADER_VERSION}.tar.gz" -o source.tar.gz && \
-    tar -xzf source.tar.gz && \
-    cd yacreader-* && \
-    echo "Compiling YACReader" && \
-    cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DDECOMPRESSION_BACKEND=7zip && \
-    cmake --build build --parallel $(nproc) && \
-    DESTDIR=/build_out cmake --install build
-
 FROM jlesage/baseimage-gui:ubuntu-26.04-v4 AS runtime
 
 ARG YACREADER_VERSION
@@ -63,7 +26,7 @@ RUN set -eux; \
     mkdir -p /config/log && apt-get update -qq \
     && apt-get install -y -qq \
     fontconfig fonts-noto fonts-noto-cjk \
-    7zip 7zip-standalone libarchive13t64 \
+    7zip libarchive13t64 \
     libqt6core6 libqt6gui6 libqt6network6 libqt6widgets6 libqt6sql6-sqlite libpoppler-qt6-3t64 \
     libqt6multimedia6 libqt6svg6 libqt6svgwidgets6 libqt6opengl6 libqt6openglwidgets6 libqt6core5compat6 libqt6shadertools6 libqt6texttospeech6 \
     qt6-gtk-platformtheme qt6-image-formats-plugins qt6-qpa-plugins \
@@ -78,7 +41,7 @@ RUN --mount=type=bind,source=icon.png,target=/icon.png \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /build_out/ /
+COPY output/${TARGETARCH}/ /
 
 RUN if [ -d /usr/lib/7zip ]; then \
         ln -sf /usr/lib/7zip/7z.so /usr/lib/7zip/lib7z.so && \
