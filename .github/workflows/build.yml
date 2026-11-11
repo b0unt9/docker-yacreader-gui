@@ -33,7 +33,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Cache YACReader build
+        id: cache-build
+        uses: actions/cache@v6
+        with:
+          path: ${{ matrix.arch }}.tar
+          key: yacreader-build-${{ matrix.arch }}-${{ inputs.version }}
+
       - name: Compile YACReader in isolated Ubuntu container
+        if: steps.cache-build.outputs.cache-hit != 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace ubuntu:26.04 bash -c "
             export DEBIAN_FRONTEND=noninteractive
@@ -60,6 +68,7 @@ jobs:
           "
 
       - name: Create tarball
+        if: steps.cache-build.outputs.cache-hit != 'true'
         run: |
           cd build_out
           tar -cvf ../${{ matrix.arch }}.tar .
@@ -136,5 +145,5 @@ jobs:
             YACREADER_VERSION=${{ inputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/yacreader-gui:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/yacreader-gui:buildcache,mode=max

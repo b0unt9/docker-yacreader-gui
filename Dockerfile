@@ -1,7 +1,6 @@
 FROM jlesage/baseimage-gui:ubuntu-26.04-v4 AS runtime
 
-ARG YACREADER_VERSION
-ARG TARGETARCH
+
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -37,6 +36,8 @@ RUN set -eux; \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+ARG TARGETARCH
+
 COPY output/${TARGETARCH}/ /
 
 RUN if [ -d /usr/lib/7zip ]; then \
@@ -45,6 +46,8 @@ RUN if [ -d /usr/lib/7zip ]; then \
     fi
 
 COPY --chmod=755 rootfs/ /
+
+ARG YACREADER_VERSION
 
 RUN \
     set-cont-env APP_NAME "YACReader Library" && \
