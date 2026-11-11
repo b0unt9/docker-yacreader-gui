@@ -28,7 +28,7 @@ RUN set -eux; \
     && apt-get install -y -qq \
     fontconfig fonts-noto fonts-noto-cjk \
     7zip 7zip-rar libarchive13t64 \
-    libqt6core6 libqt6gui6 libqt6network6 libqt6widgets6 libqt6sql6-sqlite libpoppler-qt6-3t64 \
+    libqt6core6 libqt6gui6 libqt6network6 libqt6widgets6 libqt6concurrent6 libqt6sql6-sqlite libpoppler-qt6-3t64 \
     libqt6multimedia6 libqt6svg6 libqt6svgwidgets6 libqt6opengl6 libqt6openglwidgets6 libqt6core5compat6 libqt6shadertools6 libqt6texttospeech6 \
     qt6-gtk-platformtheme qt6-image-formats-plugins qt6-qpa-plugins \
     libqt6qml6 libqt6quick6 libqt6quickwidgets6 \
